@@ -20,16 +20,13 @@ class _CreateScreenState extends State<CreateScreen> {
 
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Usuario no autenticado')),
-      );
+      _showErrorSnackBar('Usuario no autenticado');
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
-      // Verifica si el usuario ya tiene un cercle
       final existing = await Supabase.instance.client
           .from('cercles')
           .select()
@@ -37,14 +34,10 @@ class _CreateScreenState extends State<CreateScreen> {
           .maybeSingle();
 
       if (existing != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ya has creado un cercle. Solo puedes crear uno.')),
-        );
-        setState(() => _isLoading = false);
+        _showErrorSnackBar('Ya has creado un cercle. Solo puedes crear uno.');
         return;
       }
 
-      // Verifica si el nombre del cercle ya existe
       final nombreExiste = await Supabase.instance.client
           .from('cercles')
           .select('id')
@@ -52,14 +45,10 @@ class _CreateScreenState extends State<CreateScreen> {
           .maybeSingle();
 
       if (nombreExiste != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('El nombre del cercle ya existe.')),
-        );
-        setState(() => _isLoading = false);
+        _showErrorSnackBar('El nombre del cercle ya existe.');
         return;
       }
 
-      // Si pasa todas las validaciones, crear el cercle
       final insertResponse = await Supabase.instance.client
           .from('cercles')
           .insert({
@@ -78,19 +67,26 @@ class _CreateScreenState extends State<CreateScreen> {
         'cercle_id': cercleId,
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cercle creado y unido exitosamente')),
-      );
-
-      _nombreController.clear();
-      _descripcionController.clear();
+      _showSuccessSnackBar('Cercle creado y unido exitosamente');
+      _clearForm();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      _showErrorSnackBar('Error: $e');
     } finally {
       setState(() => _isLoading = false);
     }
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.red));
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.green));
+  }
+
+  void _clearForm() {
+    _nombreController.clear();
+    _descripcionController.clear();
   }
 
   @override
@@ -102,20 +98,31 @@ class _CreateScreenState extends State<CreateScreen> {
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextFormField(
                 controller: _nombreController,
-                decoration: const InputDecoration(labelText: 'Nombre'),
+                decoration: const InputDecoration(
+                  labelText: 'Nombre',
+                  prefixIcon: Icon(Icons.add_circle_outline),
+                  border: OutlineInputBorder(),
+                ),
                 validator: (value) =>
                     value == null || value.isEmpty ? 'Introduce un nombre' : null,
               ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _descripcionController,
-                decoration: const InputDecoration(labelText: 'Descripción'),
+                decoration: const InputDecoration(
+                  labelText: 'Descripción',
+                  prefixIcon: Icon(Icons.description),
+                  border: OutlineInputBorder(),
+                ),
                 validator: (value) => value == null || value.isEmpty
                     ? 'Introduce una descripción'
                     : null,
               ),
+              const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _visibilidad,
                 items: const [
@@ -125,7 +132,11 @@ class _CreateScreenState extends State<CreateScreen> {
                 onChanged: (value) {
                   if (value != null) setState(() => _visibilidad = value);
                 },
-                decoration: const InputDecoration(labelText: 'Visibilidad'),
+                decoration: const InputDecoration(
+                  labelText: 'Visibilidad',
+                  prefixIcon: Icon(Icons.visibility),
+                  border: OutlineInputBorder(),
+                ),
               ),
               const SizedBox(height: 20),
               ElevatedButton(

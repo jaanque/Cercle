@@ -91,6 +91,51 @@ class _MiCercleScreenState extends State<MiCercleScreen> {
     }
   }
 
+  Future<void> eliminarCercle() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar Cercle'),
+        content: const Text('¿Estás seguro de que deseas eliminar este cercle? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(
+            child: const Text('Cancelar'),
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          TextButton(
+            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    // Eliminar el cercle
+    await Supabase.instance.client
+        .from('cercles')
+        .delete()
+        .eq('id', _cercle!['id']);
+
+    // Eliminar las relaciones del usuario con el cercle
+    await Supabase.instance.client
+        .from('usuarios_cercles')
+        .delete()
+        .eq('cercle_id', _cercle!['id']);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Cercle eliminado')),
+    );
+
+    // Redirigir o actualizar la pantalla actual si es necesario
+    if (context.mounted) {
+      setState(() {
+        _cercle = null; // Asegura que el cercle se elimina visualmente
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -191,15 +236,15 @@ class _MiCercleScreenState extends State<MiCercleScreen> {
             const SizedBox(height: 24),
 
             if (_isCreator)
-              ElevatedButton.icon(
-                onPressed: () {
-                  // Lógica para eliminar el cercle
-                },
-                icon: const Icon(Icons.delete),
-                label: const Text('Eliminar Cercle'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: eliminarCercle,
+                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  label: const Text(
+                    'Eliminar Cercle',
+                    style: TextStyle(color: Colors.red),
+                  ),
                 ),
               )
             else
