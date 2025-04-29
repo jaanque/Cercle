@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/auth_service.dart';
 import 'home_screen.dart';
-import 'login_screen.dart';
+import 'onboarding_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -60,11 +61,11 @@ class _SplashScreenState extends State<SplashScreen> {
         }
       }
     } else {
-      // Usuario no autenticado, ir a login
+      // Usuario no autenticado, ir a la pantalla de onboarding
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (context) => const LoginScreen(),
+            builder: (context) => const OnboardingScreen(),
           ),
         );
       }
@@ -73,14 +74,34 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 24),
-            Text('Cargando...', style: TextStyle(fontSize: 18)),
+            Image.asset(
+              'assets/logo.png',
+              width: 120,
+              height: 120,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(
+                  Icons.circle,
+                  size: 120,
+                  color: Colors.blue,
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Cercle',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const CircularProgressIndicator(),
           ],
         ),
       ),
