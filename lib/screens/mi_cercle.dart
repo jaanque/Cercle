@@ -14,6 +14,7 @@ class _MiCercleScreenState extends State<MiCercleScreen> {
   bool _isCreator = false;
   bool _loading = true;
 
+  final _formKey = GlobalKey<FormState>();
   final _nombreController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _visibilidadController = TextEditingController();
@@ -64,81 +65,12 @@ class _MiCercleScreenState extends State<MiCercleScreen> {
     });
   }
 
-  Future<void> eliminarCercle() async {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null || _cercle == null || _cercle!['user_id'] != user.id) return;
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('¿Eliminar Cercle?'),
-        content: const Text('Esta acción no se puede deshacer.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar')),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
-
-    await Supabase.instance.client
-        .from('usuarios_cercles')
-        .delete()
-        .eq('cercle_id', _cercle!['id']);
-
-    await Supabase.instance.client
-        .from('cercles')
-        .delete()
-        .eq('id', _cercle!['id']);
-
-    setState(() {
-      _cercle = null;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Cercle eliminado')),
-    );
-  }
-
-  Future<void> abandonarCercle() async {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null || _cercle == null) return;
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('¿Abandonar Cercle?'),
-        content: const Text('¿Seguro que deseas abandonar este cercle?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Abandonar')),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
-
-    await Supabase.instance.client
-        .from('usuarios_cercles')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('cercle_id', _cercle!['id']);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Has abandonado el cercle')),
-    );
-
-    setState(() {
-      _cercle = null; // Esto actualizará la interfaz para reflejar que ya no estás en ningún cercle.
-    });
-  }
-
   Future<void> guardarCambios() async {
+    if (!_formKey.currentState!.validate()) return;
+
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null || _cercle == null || _cercle!['user_id'] != user.id) return;
 
-    // Actualizamos los datos en Supabase
     final response = await Supabase.instance.client
         .from('cercles')
         .update({
@@ -184,36 +116,85 @@ class _MiCercleScreenState extends State<MiCercleScreen> {
             const SizedBox(height: 24),
 
             if (_isCreator) ...[
-              // Mostrar campos editables si es el propietario
-              TextField(
-                controller: _nombreController,
-                decoration: const InputDecoration(labelText: 'Nuevo nombre'),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _descripcionController,
-                decoration: const InputDecoration(labelText: 'Nueva descripción'),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _visibilidadController,
-                decoration: const InputDecoration(labelText: 'Nueva visibilidad'),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: guardarCambios,
-                icon: const Icon(Icons.save),
-                label: const Text('Guardar cambios'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
+              Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextFormField(
+                      controller: _nombreController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nuevo nombre',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'El nombre no puede estar vacío';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _descripcionController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nueva descripción',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'La descripción no puede estar vacía';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: _visibilidadController.text.isNotEmpty ? _visibilidadController.text : null,
+                      decoration: const InputDecoration(
+                        labelText: 'Nueva visibilidad',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'publico', child: Text('Público')),
+                        DropdownMenuItem(value: 'privado', child: Text('Privado')),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            _visibilidadController.text = value;
+                          });
+                        }
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'La visibilidad no puede estar vacía';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: guardarCambios,
+                      icon: const Icon(Icons.save),
+                      label: const Text('Guardar cambios'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
 
+            const SizedBox(height: 24),
+
             if (_isCreator)
               ElevatedButton.icon(
-                onPressed: eliminarCercle,
+                onPressed: () {
+                  // Lógica para eliminar el cercle
+                },
                 icon: const Icon(Icons.delete),
                 label: const Text('Eliminar Cercle'),
                 style: ElevatedButton.styleFrom(
@@ -223,7 +204,9 @@ class _MiCercleScreenState extends State<MiCercleScreen> {
               )
             else
               ElevatedButton.icon(
-                onPressed: abandonarCercle,
+                onPressed: () {
+                  // Lógica para abandonar el cercle
+                },
                 icon: const Icon(Icons.logout),
                 label: const Text('Abandonar Cercle'),
                 style: ElevatedButton.styleFrom(
