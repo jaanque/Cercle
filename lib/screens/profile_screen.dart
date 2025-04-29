@@ -64,7 +64,7 @@ class ProfileScreen extends StatelessWidget {
                   ListTile(
                     leading: Icon(Icons.email),
                     title: Text('Correo electrónico'),
-                    subtitle: Text('usuario@example.com'),
+                    subtitle: Text('jhondoe@example.com'),
                   ),
                   ListTile(
                     leading: Icon(Icons.calendar_today),

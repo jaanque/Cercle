@@ -13,24 +13,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
+  // Color principal según la imagen de referencia
+  final Color _primaryColor = const Color(0xFFE87F65); // Color coral/naranja
+  final Color _backgroundColor = const Color(0xFF2D2D2D); // Color de fondo oscuro
+
   final List<OnboardingPage> _pages = [
     OnboardingPage(
       title: 'Bienvenido a Cercle',
       description: 'Conecta con las personas que te importan y comparte momentos especiales',
       image: Icons.group,
-      color: Colors.blue,
+      color: const Color(0xFFE87F65),
     ),
     OnboardingPage(
       title: 'Explora nuevas conexiones',
       description: 'Descubre eventos, grupos y personas con intereses similares a los tuyos',
       image: Icons.explore,
-      color: Colors.green,
+      color: const Color(0xFFE87F65),
     ),
     OnboardingPage(
       title: 'Privacidad y seguridad',
       description: 'Tu información está segura, tú decides qué compartir y con quién',
       image: Icons.security,
-      color: Colors.purple,
+      color: const Color(0xFFE87F65),
     ),
   ];
 
@@ -49,10 +53,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _backgroundColor,
       body: SafeArea(
         child: Column(
           children: [
-            // Área del slider (parte superior, 60% de la pantalla)
+            // Área del slider (parte superior)
             Expanded(
               flex: 6,
               child: PageView.builder(
@@ -77,23 +82,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
             
-            // Área de botones (parte inferior, 40% de la pantalla)
+            // Área de botones (parte inferior)
             Expanded(
-              flex: 4,
+              flex: 2,
               child: Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, -3),
-                    ),
-                  ],
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     SizedBox(
                       width: double.infinity,
@@ -107,8 +102,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).primaryColor,
+                          backgroundColor: _primaryColor,
                           foregroundColor: Colors.white,
+                          elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -123,7 +119,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     SizedBox(
                       width: double.infinity,
                       height: 50,
-                      child: OutlinedButton(
+                      child: ElevatedButton(
                         onPressed: () {
                           Navigator.of(context).pushReplacement(
                             MaterialPageRoute(
@@ -131,12 +127,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ),
                           );
                         },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Theme.of(context).primaryColor,
-                          side: BorderSide(
-                            color: Theme.of(context).primaryColor,
-                            width: 1,
-                          ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _primaryColor,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -174,6 +168,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             style: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
             textAlign: TextAlign.center,
           ),
@@ -182,7 +177,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             page.description,
             style: const TextStyle(
               fontSize: 16,
-              color: Colors.grey,
+              color: Colors.white70,
             ),
             textAlign: TextAlign.center,
           ),
@@ -199,8 +194,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: _currentPage == index
-            ? Theme.of(context).primaryColor
-            : Colors.grey.shade300,
+            ? _primaryColor
+            : Colors.grey.shade600,
       ),
     );
   }
