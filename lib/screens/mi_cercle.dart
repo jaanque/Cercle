@@ -14,6 +14,10 @@ class _MiCercleScreenState extends State<MiCercleScreen> {
   bool _isCreator = false;
   bool _loading = true;
 
+  final _nombreController = TextEditingController();
+  final _descripcionController = TextEditingController();
+  final _visibilidadController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -52,6 +56,11 @@ class _MiCercleScreenState extends State<MiCercleScreen> {
     setState(() {
       _cercle = cercleData;
       _loading = false;
+      if (_cercle != null) {
+        _nombreController.text = _cercle!['nombre'];
+        _descripcionController.text = _cercle!['descripcion'];
+        _visibilidadController.text = _cercle!['visibilidad'];
+      }
     });
   }
 
@@ -120,12 +129,32 @@ class _MiCercleScreenState extends State<MiCercleScreen> {
       const SnackBar(content: Text('Has abandonado el cercle')),
     );
 
-    // Redirigir al usuario a DiscoverScreen
-    if (mounted) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const DiscoverScreen()),
-        (route) => false,
+    setState(() {
+      _cercle = null; // Esto actualizará la interfaz para reflejar que ya no estás en ningún cercle.
+    });
+  }
+
+  Future<void> guardarCambios() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null || _cercle == null || _cercle!['user_id'] != user.id) return;
+
+    // Actualizamos los datos en Supabase
+    final response = await Supabase.instance.client
+        .from('cercles')
+        .update({
+          'nombre': _nombreController.text,
+          'descripcion': _descripcionController.text,
+          'visibilidad': _visibilidadController.text,
+        })
+        .eq('id', _cercle!['id'])
+        .single();
+
+    if (response != null) {
+      setState(() {
+        _cercle = response;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cambios guardados')),
       );
     }
   }
@@ -153,6 +182,35 @@ class _MiCercleScreenState extends State<MiCercleScreen> {
             const SizedBox(height: 8),
             Text('Visibilidad: ${_cercle!['visibilidad']}'),
             const SizedBox(height: 24),
+
+            if (_isCreator) ...[
+              // Mostrar campos editables si es el propietario
+              TextField(
+                controller: _nombreController,
+                decoration: const InputDecoration(labelText: 'Nuevo nombre'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _descripcionController,
+                decoration: const InputDecoration(labelText: 'Nueva descripción'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _visibilidadController,
+                decoration: const InputDecoration(labelText: 'Nueva visibilidad'),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: guardarCambios,
+                icon: const Icon(Icons.save),
+                label: const Text('Guardar cambios'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+
             if (_isCreator)
               ElevatedButton.icon(
                 onPressed: eliminarCercle,

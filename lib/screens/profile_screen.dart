@@ -162,16 +162,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           leading: const Icon(Icons.group),
                           title: Text(cercle['nombre'] ?? ''),
                           subtitle: Text(cercle['descripcion'] ?? ''),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.arrow_forward),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const MiCercleScreen()),
-                              );
-                            },
-                          ),
+                          // Aquí he eliminado el IconButton (la flecha de navegación)
                         );
                       }).toList(),
                     ),
