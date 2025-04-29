@@ -51,6 +51,75 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     });
   }
 
+  Future<bool> usuarioTieneCercle(String userId) async {
+    final existing = await Supabase.instance.client
+        .from('usuarios_cercles')
+        .select()
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    return existing != null;
+  }
+
+  Future<void> unirseACercle(String userId, String cercleId) async {
+    await Supabase.instance.client.from('usuarios_cercles').insert({
+      'user_id': userId,
+      'cercle_id': cercleId,
+    });
+  }
+
+  void _intentarUnirse(Map<String, dynamic> cercle) async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Usuario no autenticado')),
+      );
+      return;
+    }
+
+    final yaTieneCercle = await usuarioTieneCercle(user.id);
+
+    if (yaTieneCercle) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ya perteneces a un cercle. Debes salir antes de unirte a otro.'),
+        ),
+      );
+      return;
+    }
+
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar unión'),
+        content: Text('¿Seguro que deseas unirte al cercle "${cercle['nombre']}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Unirse'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar == true) {
+      try {
+        await unirseACercle(user.id, cercle['id']);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Te has unido al cercle exitosamente.')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al unirse: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -81,6 +150,10 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                               title: Text(cercle['nombre'] ?? 'Sin nombre'),
                               subtitle: Text(cercle['descripcion'] ?? ''),
                               leading: const Icon(Icons.public),
+                              trailing: ElevatedButton(
+                                onPressed: () => _intentarUnirse(cercle),
+                                child: const Text('Unirse'),
+                              ),
                             );
                           },
                         ),

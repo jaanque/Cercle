@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'discover_screen.dart'; // Asegúrate que la ruta sea correcta
 
 class MiCercleScreen extends StatefulWidget {
   const MiCercleScreen({super.key});
@@ -23,7 +24,6 @@ class _MiCercleScreenState extends State<MiCercleScreen> {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return;
 
-    // Buscar el cercle_id del usuario
     final userCercle = await Supabase.instance.client
         .from('usuarios_cercles')
         .select('cercle_id')
@@ -39,7 +39,6 @@ class _MiCercleScreenState extends State<MiCercleScreen> {
 
     final cercleId = userCercle['cercle_id'];
 
-    // Obtener la info del cercle
     final cercleData = await Supabase.instance.client
         .from('cercles')
         .select()
@@ -93,6 +92,44 @@ class _MiCercleScreenState extends State<MiCercleScreen> {
     );
   }
 
+  Future<void> abandonarCercle() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null || _cercle == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('¿Abandonar Cercle?'),
+        content: const Text('¿Seguro que deseas abandonar este cercle?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Abandonar')),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    await Supabase.instance.client
+        .from('usuarios_cercles')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('cercle_id', _cercle!['id']);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Has abandonado el cercle')),
+    );
+
+    // Redirigir al usuario a DiscoverScreen
+    if (mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const DiscoverScreen()),
+        (route) => false,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -123,6 +160,16 @@ class _MiCercleScreenState extends State<MiCercleScreen> {
                 label: const Text('Eliminar Cercle'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+              )
+            else
+              ElevatedButton.icon(
+                onPressed: abandonarCercle,
+                icon: const Icon(Icons.logout),
+                label: const Text('Abandonar Cercle'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
                   foregroundColor: Colors.white,
                 ),
               ),
