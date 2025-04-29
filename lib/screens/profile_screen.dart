@@ -15,13 +15,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final user = Supabase.instance.client.auth.currentUser;
   List<dynamic> _cercles = [];
   bool _isLoading = true;
+  bool _isVerified = false;
 
   @override
   void initState() {
     super.initState();
     if (user != null) {
+      fetchUserProfile();
       fetchUserCercles();
     }
+  }
+
+  Future<void> fetchUserProfile() async {
+    final response = await Supabase.instance.client
+        .from('profiles')
+        .select('is_verified')
+        .eq('id', user!.id)
+        .single();
+
+    setState(() {
+      _isVerified = response['is_verified'] ?? false;
+    });
   }
 
   Future<void> fetchUserCercles() async {
@@ -54,14 +68,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            Text(
-              widget.username,
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
+
+            // Nombre con verificación
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  widget.username,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (_isVerified)
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8.0),
+                    child: Icon(
+                      Icons.verified,
+                      color: Colors.amber,
+                      size: 28,
+                    ),
+                  ),
+              ],
             ),
+
             const SizedBox(height: 16),
             const Text(
               'Perfil de usuario',
@@ -70,7 +100,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 40),
 
-            // Información personal
+            // Información personal (solo fecha)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -89,11 +119,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   SizedBox(height: 16),
-                  ListTile(
-                    leading: Icon(Icons.email),
-                    title: Text('Correo electrónico'),
-                    subtitle: Text('jhondoe@example.com'),
-                  ),
                   ListTile(
                     leading: Icon(Icons.calendar_today),
                     title: Text('Fecha de registro'),

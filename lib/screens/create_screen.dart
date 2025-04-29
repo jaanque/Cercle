@@ -44,12 +44,27 @@ class _CreateScreenState extends State<CreateScreen> {
         return;
       }
 
-      // Si no tiene, crear el cercle
+      // Verifica si el nombre del cercle ya existe
+      final nombreExiste = await Supabase.instance.client
+          .from('cercles')
+          .select('id')
+          .eq('nombre', _nombreController.text.trim())
+          .maybeSingle();
+
+      if (nombreExiste != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('El nombre del cercle ya existe.')),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Si pasa todas las validaciones, crear el cercle
       final insertResponse = await Supabase.instance.client
           .from('cercles')
           .insert({
-            'nombre': _nombreController.text,
-            'descripcion': _descripcionController.text,
+            'nombre': _nombreController.text.trim(),
+            'descripcion': _descripcionController.text.trim(),
             'visibilidad': _visibilidad,
             'user_id': user.id,
           })
@@ -91,9 +106,8 @@ class _CreateScreenState extends State<CreateScreen> {
               TextFormField(
                 controller: _nombreController,
                 decoration: const InputDecoration(labelText: 'Nombre'),
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Introduce un nombre'
-                    : null,
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Introduce un nombre' : null,
               ),
               TextFormField(
                 controller: _descripcionController,
