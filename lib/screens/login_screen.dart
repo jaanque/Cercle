@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/validators.dart';
 import '../widgets/custom_text_field.dart';
 import '../services/auth_service.dart';
-import 'home_screen.dart';
+import 'main_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -52,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // Navegar a la pantalla principal
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (context) => HomeScreen(username: username ?? 'Usuario'),
+            builder: (context) => MainScreen(username: username ?? 'Usuario'),
           ),
         );
       }

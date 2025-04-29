@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/auth_service.dart';
-import 'home_screen.dart';
+import 'main_screen.dart';
 import 'onboarding_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -55,7 +55,7 @@ class _SplashScreenState extends State<SplashScreen> {
         if (mounted) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
-              builder: (context) => HomeScreen(username: username),
+              builder: (context) => MainScreen(username: username),
             ),
           );
         }
