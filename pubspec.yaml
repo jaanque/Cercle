@@ -1,20 +1,23 @@
-name: slicemap
-description: "A new Flutter project."
+name: auth_app
+description: A Flutter auth application with Supabase.
 publish_to: 'none'
-version: 0.1.0
+version: 1.0.0+1
 
 environment:
-  sdk: ^3.7.2
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  go_router: ^15.1.1
+  supabase_flutter: ^2.8.4
+  flutter_secure_storage: ^9.2.4
+  email_validator: ^3.0.0
+  cupertino_icons: ^1.0.8
+  flutter_lints: ^5.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
 
 flutter:
   uses-material-design: true
