@@ -181,7 +181,7 @@ class _CercleDetailScreenState extends State<CercleDetailScreen> {
       // Si no se encontró el usuario, usar valores predeterminados
       if (userRes == null) {
         _mostrarMensaje('Información de usuario no disponible', true);
-        final username = 'Usuario desconocido';
+        final username = 'Anónimo';
         final isVerified = false;
         
         // Mostrar el diálogo con la información disponible (solo la imagen)

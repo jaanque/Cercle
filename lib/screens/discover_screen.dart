@@ -151,49 +151,59 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                           itemBuilder: (context, index) {
                             final cercle = _filteredCercles[index];
                             return Card(
-                              margin: const EdgeInsets.only(bottom: 16),
+                              margin: const EdgeInsets.only(bottom: 12),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              elevation: 4,
-                              shadowColor: _coral.withOpacity(0.2),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
+                              elevation: 2,
+                              shadowColor: _coral.withOpacity(0.1),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    left: BorderSide(color: _coral, width: 4),
+                                  ),
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
                                       children: [
-                                        const Icon(Icons.public, color: Colors.grey),
-                                        const SizedBox(width: 8),
+                                        Icon(Icons.groups_2, color: _coral, size: 20),
+                                        const SizedBox(width: 6),
                                         Expanded(
                                           child: Text(
                                             cercle['nombre'] ?? 'Sin nombre',
                                             style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14.5,
                                             ),
                                           ),
                                         ),
                                         if (cercle['is_verified'] == true)
-                                          Icon(Icons.verified, color: _coral, size: 20),
+                                          Icon(Icons.verified, color: _coral, size: 18),
                                       ],
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 6),
                                     Text(
                                       cercle['descripcion'] ?? '',
-                                      style: const TextStyle(fontSize: 14, color: Colors.black54),
+                                      style: const TextStyle(fontSize: 13, color: Colors.black54),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    const SizedBox(height: 12),
+                                    const SizedBox(height: 8),
                                     Align(
                                       alignment: Alignment.centerRight,
-                                      child: ElevatedButton(
+                                      child: TextButton(
                                         onPressed: () => _intentarUnirse(cercle),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: _coral,
+                                        style: TextButton.styleFrom(
+                                          foregroundColor: _coral,
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(6),
+                                            side: BorderSide(color: _coral),
                                           ),
+                                          textStyle: const TextStyle(fontSize: 13.5),
                                         ),
                                         child: const Text('Unirse'),
                                       ),

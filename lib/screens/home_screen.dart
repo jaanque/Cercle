@@ -30,7 +30,7 @@ class Publicacion {
       creadoEn: DateTime.parse(json['creado_en']),
       cercleNombre: cercle['nombre'] ?? 'Cercle desconocido',
       cercleVerificado: cercle['is_verified'] ?? false,
-      username: perfil['username'] ?? 'Usuario desconocido',
+      username: perfil['username'] ?? 'Anónimo',
       usuarioVerificado: perfil['is_verified'] ?? false,
     );
   }
@@ -77,6 +77,7 @@ class HomeScreen extends StatelessWidget {
   final publicacionesService = PublicacionesService();
 
   final Color _coral = const Color(0xFFE87F65);
+  final Color _verificadoColor = const Color(0xFFDA7756);
 
   HomeScreen({
     super.key,
@@ -179,7 +180,7 @@ class HomeScreen extends StatelessWidget {
                             if (pub.cercleVerificado)
                               Padding(
                                 padding: const EdgeInsets.only(left: 6),
-                                child: Icon(Icons.verified, color: _coral, size: 18),
+                                child: Icon(Icons.verified, color: _verificadoColor, size: 18),
                               ),
                           ],
                         ),
@@ -193,7 +194,7 @@ class HomeScreen extends StatelessWidget {
                             if (pub.usuarioVerificado)
                               Padding(
                                 padding: const EdgeInsets.only(left: 6),
-                                child: Icon(Icons.verified_user, color: _coral, size: 18),
+                                child: Icon(Icons.verified, color: _verificadoColor, size: 18),
                               ),
                           ],
                         ),
