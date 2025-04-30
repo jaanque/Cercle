@@ -39,7 +39,8 @@ class _CercleDetailScreenState extends State<CercleDetailScreen> {
       final res = await _supabase
           .from('publicaciones')
           .select('id, imagen_url, user_id')
-          .eq('cercle_id', widget.cercle['id']);
+          .eq('cercle_id', widget.cercle['id'])
+          .order('creado_en', ascending: false);
 
       setState(() {
         _imagenes = List<Map<String, dynamic>>.from(res);
@@ -163,10 +164,8 @@ class _CercleDetailScreenState extends State<CercleDetailScreen> {
     );
   }
 
-  Future<void> _mostrarDetallePublicacion(
-      String imageUrl, String userId) async {
+  Future<void> _mostrarDetallePublicacion(String imageUrl, String userId) async {
     try {
-      // Verificar que la URL de la imagen sea válida
       if (imageUrl.isEmpty) {
         _mostrarMensaje('URL de imagen inválida', true);
         return;
@@ -177,16 +176,10 @@ class _CercleDetailScreenState extends State<CercleDetailScreen> {
           .select('username, is_verified')
           .eq('id', userId)
           .maybeSingle();
-          
-      // Si no se encontró el usuario, usar valores predeterminados
+
       if (userRes == null) {
         _mostrarMensaje('Información de usuario no disponible', true);
-        final username = 'Anónimo';
-        final isVerified = false;
-        
-        // Mostrar el diálogo con la información disponible (solo la imagen)
-        if (!mounted) return;
-        _mostrarDialogoConImagen(imageUrl, username, isVerified);
+        _mostrarDialogoConImagen(imageUrl, 'Anónimo', false);
         return;
       }
 
@@ -194,7 +187,6 @@ class _CercleDetailScreenState extends State<CercleDetailScreen> {
       final isVerified = userRes['is_verified'] ?? false;
 
       if (!mounted) return;
-      
       _mostrarDialogoConImagen(imageUrl, username, isVerified);
     } catch (e) {
       _mostrarMensaje('Error al cargar detalle de la publicación: ${e.toString()}', true);
@@ -207,98 +199,129 @@ class _CercleDetailScreenState extends State<CercleDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            Flexible(
-              child: Text(
-                cercle['nombre'] ?? 'Detalle del cercle',
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            if (cercle['is_verified'] == true)
-              const Padding(
-                padding: EdgeInsets.only(left: 6),
-                child: Icon(Icons.verified, color: Color(0xFFDA7756), size: 20),
-              ),
-          ],
-        ),
+        title: Text(cercle['nombre'] ?? 'Perfil del cercle'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              cercle['nombre'] ?? '',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Colors.grey[300],
+                  backgroundImage: cercle['avatar_url'] != null
+                      ? NetworkImage(cercle['avatar_url'])
+                      : null,
+                  child: cercle['avatar_url'] == null
+                      ? const Icon(Icons.group, size: 40, color: Colors.white)
+                      : null,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              cercle['nombre'] ?? '',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          // Verificación del estado 'is_verified'
+                          if ((cercle['is_verified'] ?? false))
+                            const Padding(
+                              padding: EdgeInsets.only(left: 6),
+                              child: Icon(
+                                Icons.verified,
+                                color: Color(0xFFDA7756),
+                                size: 20,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        cercle['descripcion'] ?? '',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${_imagenes.length} publicaciones',
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              cercle['descripcion'] ?? '',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: _subirImagen,
               icon: const Icon(Icons.upload),
               label: const Text('Subir imagen'),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             _imagenes.isEmpty
-                ? const Expanded(
-                    child: Center(
-                      child: Text('No hay imágenes disponibles'),
+                ? const Center(child: Text('No hay imágenes disponibles'))
+                : GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _imagenes.length,
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      childAspectRatio: 1,
                     ),
-                  )
-                : Expanded(
-                    child: GridView.builder(
-                      itemCount: _imagenes.length,
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        mainAxisSpacing: 8,
-                        crossAxisSpacing: 8,
-                        childAspectRatio: 1,
-                      ),
-                      itemBuilder: (context, index) {
-                        final imagen = _imagenes[index];
-                        return GestureDetector(
-                          onTap: () => _mostrarDetallePublicacion(
+                    itemBuilder: (context, index) {
+                      final imagen = _imagenes[index];
+                      return GestureDetector(
+                        onTap: () => _mostrarDetallePublicacion(
+                          imagen['imagen_url'],
+                          imagen['user_id'],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
                             imagen['imagen_url'],
-                            imagen['user_id'],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              imagen['imagen_url'],
-                              fit: BoxFit.cover,
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return Container(
-                                  color: Colors.grey[200],
-                                  child: Center(
-                                    child: CircularProgressIndicator(
-                                      value: loadingProgress.expectedTotalBytes != null
-                                          ? loadingProgress.cumulativeBytesLoaded /
-                                              loadingProgress.expectedTotalBytes!
-                                          : null,
-                                    ),
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                color: Colors.grey[200],
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress.cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
                                   ),
-                                );
-                              },
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: Colors.grey[300],
-                                  child: const Icon(
-                                    Icons.broken_image,
-                                    color: Colors.grey,
-                                  ),
-                                );
-                              },
-                            ),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.grey[300],
+                                child: const Icon(
+                                  Icons.broken_image,
+                                  color: Colors.grey,
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    },
                   ),
           ],
         ),
