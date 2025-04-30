@@ -165,21 +165,35 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text(
-          _getAppBarTitle(),
-          style: const TextStyle(fontWeight: FontWeight.bold),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center, // Centrar el contenido horizontalmente
+          children: [
+            // Donut circle pequeño con color #DA7756
+            Container(
+              height: 30, // Tamaño más pequeño
+              width: 30, // Tamaño más pequeño
+              decoration: BoxDecoration(
+                color: Colors.white, // Fondo blanco en el centro del donut
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color(0xFFDA7756), // Borde color pastel
+                  width: 7, // Grosor del borde ajustado
+                ),
+              ),
+            ),
+            const SizedBox(width: 10), // Espacio entre el círculo y el texto
+            const Text(
+              'Cercle',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 24, // Tamaño de fuente ajustado para mayor equilibrio visual
+              ),
+            ),
+          ],
         ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0.5,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar sesión',
-            onPressed: () => _signOut(context),
-            color: Colors.grey[800],
-          ),
-        ],
       ),
       body: screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
@@ -231,7 +245,7 @@ class _MainScreenState extends State<MainScreen> {
   String _getAppBarTitle() {
     switch (_selectedIndex) {
       case 0:
-        return 'Inicio';
+        return 'Cercle';
       case 1:
         return 'Descubrir';
       case 2:

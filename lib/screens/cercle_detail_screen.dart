@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
+import 'dart:math';
 
 class CercleDetailScreen extends StatefulWidget {
   final Map<String, dynamic> cercle;
@@ -18,11 +19,13 @@ class _CercleDetailScreenState extends State<CercleDetailScreen> {
   final _supabase = Supabase.instance.client;
   final _uuid = const Uuid();
   List<Map<String, dynamic>> _imagenes = [];
+  String _codigoCercle = ''; // Variable para el código alfanumérico
 
   @override
   void initState() {
     super.initState();
     _cargarImagenes();
+    _obtenerCodigoCercle();
   }
 
   void _mostrarMensaje(String mensaje, [bool error = false]) {
@@ -48,6 +51,32 @@ class _CercleDetailScreenState extends State<CercleDetailScreen> {
     } catch (e) {
       _mostrarMensaje('Error al cargar imágenes: ${e.toString()}', true);
     }
+  }
+
+  Future<void> _obtenerCodigoCercle() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      _mostrarMensaje('Usuario no autenticado.', true);
+      return;
+    }
+
+    // Verificar si el usuario es el propietario
+    if (widget.cercle['user_id'] == userId) {
+      final String codigoGenerado = _generarCodigoCercle();
+      setState(() {
+        _codigoCercle = codigoGenerado;
+      });
+    }
+  }
+
+  String _generarCodigoCercle() {
+    const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final random = Random();
+    String codigo = '';
+    for (int i = 0; i < 9; i++) {
+      codigo += caracteres[random.nextInt(caracteres.length)];
+    }
+    return codigo;
   }
 
   Future<void> _subirImagen() async {
@@ -298,23 +327,13 @@ class _CercleDetailScreenState extends State<CercleDetailScreen> {
                             loadingBuilder: (context, child, loadingProgress) {
                               if (loadingProgress == null) return child;
                               return Container(
-                                color: Colors.grey[200],
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    value: loadingProgress.expectedTotalBytes != null
-                                        ? loadingProgress.cumulativeBytesLoaded /
-                                            loadingProgress.expectedTotalBytes!
-                                        : null,
-                                  ),
-                                ),
-                              );
-                            },
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
                                 color: Colors.grey[300],
-                                child: const Icon(
-                                  Icons.broken_image,
-                                  color: Colors.grey,
+                                alignment: Alignment.center,
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
                                 ),
                               );
                             },
@@ -323,6 +342,14 @@ class _CercleDetailScreenState extends State<CercleDetailScreen> {
                       );
                     },
                   ),
+            if (_codigoCercle.isNotEmpty) 
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Text(
+                  'Código del Cercle: $_codigoCercle',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
           ],
         ),
       ),

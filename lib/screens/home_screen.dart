@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
+import 'package:intl/intl.dart';  // Importamos intl
 
 class Publicacion {
   final String id;
@@ -9,8 +10,6 @@ class Publicacion {
   final DateTime creadoEn;
   final String cercleNombre;
   final bool cercleVerificado;
-  final String username;
-  final bool usuarioVerificado;
 
   Publicacion({
     required this.id,
@@ -18,11 +17,9 @@ class Publicacion {
     required this.creadoEn,
     required this.cercleNombre,
     required this.cercleVerificado,
-    required this.username,
-    required this.usuarioVerificado,
   });
 
-  factory Publicacion.fromJson(Map<String, dynamic> json, Map<String, dynamic> perfil) {
+  factory Publicacion.fromJson(Map<String, dynamic> json) {
     final cercle = json['cercles'] ?? {};
     return Publicacion(
       id: json['id'],
@@ -30,8 +27,6 @@ class Publicacion {
       creadoEn: DateTime.parse(json['creado_en']),
       cercleNombre: cercle['nombre'] ?? 'Cercle desconocido',
       cercleVerificado: cercle['is_verified'] ?? false,
-      username: perfil['username'] ?? 'Anónimo',
-      usuarioVerificado: perfil['is_verified'] ?? false,
     );
   }
 }
@@ -54,18 +49,8 @@ class PublicacionesService {
         .inFilter('cercle_id', cercleIds)
         .order('creado_en', ascending: false);
 
-    final userIds = resPublicaciones.map<String>((e) => e['user_id'] as String).toSet().toList();
-
-    final resPerfiles = await supabase
-        .from('profiles')
-        .select('id, username, is_verified')
-        .inFilter('id', userIds);
-
-    final perfilMap = { for (var p in resPerfiles) p['id']: p };
-
     return resPublicaciones.map<Publicacion>((json) {
-      final perfil = perfilMap[json['user_id']] ?? {};
-      return Publicacion.fromJson(json, perfil);
+      return Publicacion.fromJson(json);
     }).toList();
   }
 }
@@ -156,6 +141,10 @@ class HomeScreen extends StatelessWidget {
           itemBuilder: (context, index) {
             final pub = publicaciones[index];
 
+            // Formatear la fecha y la hora
+            final DateFormat dateFormat = DateFormat('yyyy-MM-dd HH:mm');
+            final String formattedDate = dateFormat.format(pub.creadoEn);
+
             return Card(
               elevation: 4,
               shadowColor: _coral.withOpacity(0.2),
@@ -165,7 +154,11 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Image.network(pub.imagenUrl, fit: BoxFit.cover, width: double.infinity),
+                  // Aseguramos que la imagen sea cuadrada (1:1)
+                  AspectRatio(
+                    aspectRatio: 1, // Relación 1:1
+                    child: Image.network(pub.imagenUrl, fit: BoxFit.cover),
+                  ),
                   Padding(
                     padding: const EdgeInsets.all(14),
                     child: Column(
@@ -185,22 +178,9 @@ class HomeScreen extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Text(
-                              'Publicado por ${pub.username}',
-                              style: const TextStyle(fontSize: 14, color: Colors.black54),
-                            ),
-                            if (pub.usuarioVerificado)
-                              Padding(
-                                padding: const EdgeInsets.only(left: 6),
-                                child: Icon(Icons.verified, color: _verificadoColor, size: 18),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
+                        // Mostrar la fecha y hora con el formato deseado
                         Text(
-                          'Publicado el: ${pub.creadoEn.toLocal()}',
+                          'Publicado el: $formattedDate',
                           style: const TextStyle(fontSize: 13, color: Colors.black45),
                         ),
                       ],
