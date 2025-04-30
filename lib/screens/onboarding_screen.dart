@@ -13,28 +13,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  // Color principal según la imagen de referencia
-  final Color _primaryColor = const Color(0xFFE87F65); // Color coral/naranja
-  final Color _backgroundColor = const Color(0xFF2D2D2D); // Color de fondo oscuro
+  final Color _primaryColor = const Color(0xFFE87F65); // Naranja Cercle
 
   final List<OnboardingPage> _pages = [
     OnboardingPage(
-      title: 'Bienvenido a Cercle',
-      description: 'Conecta con las personas que te importan y comparte momentos especiales',
-      image: Icons.group,
-      color: const Color(0xFFE87F65),
+      title: 'Crea o únete a un Cercle',
+      description: 'Forma parte de un Cercle con tus amigos o conoce nuevas personas con intereses similares.',
+      image: Icons.group_add,
     ),
     OnboardingPage(
-      title: 'Explora nuevas conexiones',
-      description: 'Descubre eventos, grupos y personas con intereses similares a los tuyos',
-      image: Icons.explore,
-      color: const Color(0xFFE87F65),
+      title: 'Comparte momentos únicos',
+      description: 'Sube tus fotos y míralas reunidas en un feed compartido con los miembros de tu Cercle.',
+      image: Icons.photo_library,
     ),
     OnboardingPage(
-      title: 'Privacidad y seguridad',
-      description: 'Tu información está segura, tú decides qué compartir y con quién',
-      image: Icons.security,
-      color: const Color(0xFFE87F65),
+      title: 'Privado o público, tú decides',
+      description: 'Haz tu Cercle público para que todos vean el feed, o privado para compartir solo con los miembros.',
+      image: Icons.lock_open,
     ),
   ];
 
@@ -50,14 +45,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     });
   }
 
+  void _nextPage() {
+    if (_currentPage < _pages.length - 1) {
+      _pageController.animateToPage(
+        _currentPage + 1,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    } else {
+      // Ir a pantalla de registro al finalizar el onboarding
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const RegisterScreen()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _backgroundColor,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            // Área del slider (parte superior)
+            // Slider
             Expanded(
               flex: 6,
               child: PageView.builder(
@@ -69,82 +79,55 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
               ),
             ),
-            
+
             // Indicadores de página
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  _pages.length,
-                  (index) => _buildDot(index),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                _pages.length,
+                (index) => _buildDot(index),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Botón Siguiente o Empezar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _nextPage,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(
+                    _currentPage == _pages.length - 1 ? 'Empezar' : 'Siguiente',
+                    style: const TextStyle(fontSize: 16),
+                  ),
                 ),
               ),
             ),
-            
-            // Área de botones (parte inferior)
-            Expanded(
-              flex: 2,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder: (context) => const LoginScreen(),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _primaryColor,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text(
-                          'Iniciar Sesión',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder: (context) => const RegisterScreen(),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _primaryColor,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text(
-                          'Registrarse',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+
+            // Opción de iniciar sesión
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                );
+              },
+              child: Text(
+                '¿Ya tienes cuenta? Inicia sesión',
+                style: TextStyle(color: _primaryColor),
               ),
             ),
+
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -157,18 +140,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            page.image,
-            size: 120,
-            color: page.color,
-          ),
+          Icon(page.image, size: 120, color: _primaryColor),
           const SizedBox(height: 40),
           Text(
             page.title,
             style: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Colors.black,
             ),
             textAlign: TextAlign.center,
           ),
@@ -177,7 +156,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             page.description,
             style: const TextStyle(
               fontSize: 16,
-              color: Colors.white70,
+              color: Colors.black54,
             ),
             textAlign: TextAlign.center,
           ),
@@ -189,13 +168,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _buildDot(int index) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
-      width: 10,
-      height: 10,
+      width: _currentPage == index ? 12 : 10,
+      height: _currentPage == index ? 12 : 10,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: _currentPage == index
-            ? _primaryColor
-            : Colors.grey.shade600,
+        color: _currentPage == index ? _primaryColor : Colors.grey.shade400,
       ),
     );
   }
@@ -205,12 +182,10 @@ class OnboardingPage {
   final String title;
   final String description;
   final IconData image;
-  final Color color;
 
   OnboardingPage({
     required this.title,
     required this.description,
     required this.image,
-    required this.color,
   });
 }

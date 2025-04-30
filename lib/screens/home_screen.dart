@@ -24,7 +24,6 @@ class Publicacion {
 
   factory Publicacion.fromJson(Map<String, dynamic> json, Map<String, dynamic> perfil) {
     final cercle = json['cercles'] ?? {};
-
     return Publicacion(
       id: json['id'],
       imagenUrl: json['imagen_url'],
@@ -41,7 +40,6 @@ class PublicacionesService {
   final supabase = Supabase.instance.client;
 
   Future<List<Publicacion>> obtenerPublicacionesDelUsuario(String userId) async {
-    // Paso 1: Obtener los IDs de cercles a los que pertenece el usuario
     final resCercles = await supabase
         .from('usuarios_cercles')
         .select('cercle_id')
@@ -50,14 +48,12 @@ class PublicacionesService {
     final List<String> cercleIds = List<String>.from(resCercles.map((e) => e['cercle_id']));
     if (cercleIds.isEmpty) return [];
 
-    // Paso 2: Obtener publicaciones con datos de cercles
     final resPublicaciones = await supabase
         .from('publicaciones')
         .select('*, cercles(nombre,is_verified)')
         .inFilter('cercle_id', cercleIds)
         .order('creado_en', ascending: false);
 
-    // Paso 3: Obtener todos los perfiles de los autores
     final userIds = resPublicaciones.map<String>((e) => e['user_id'] as String).toSet().toList();
 
     final resPerfiles = await supabase
@@ -67,7 +63,6 @@ class PublicacionesService {
 
     final perfilMap = { for (var p in resPerfiles) p['id']: p };
 
-    // Paso 4: Unir datos y retornar
     return resPublicaciones.map<Publicacion>((json) {
       final perfil = perfilMap[json['user_id']] ?? {};
       return Publicacion.fromJson(json, perfil);
@@ -80,6 +75,8 @@ class HomeScreen extends StatelessWidget {
   final bool showMenu;
   final AuthService _authService = AuthService();
   final publicacionesService = PublicacionesService();
+
+  final Color _coral = const Color(0xFFE87F65);
 
   HomeScreen({
     super.key,
@@ -96,7 +93,7 @@ class HomeScreen extends StatelessWidget {
           (route) => false,
         );
       }
-    } catch (e) {
+    } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -110,23 +107,22 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (showMenu) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Inicio'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: () => _signOut(context),
-              tooltip: 'Cerrar sesión',
+    return showMenu
+        ? Scaffold(
+            appBar: AppBar(
+              title: const Text('Inicio'),
+              backgroundColor: _coral,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.logout),
+                  onPressed: () => _signOut(context),
+                  tooltip: 'Cerrar sesión',
+                ),
+              ],
             ),
-          ],
-        ),
-        body: _buildBody(context),
-      );
-    } else {
-      return _buildBody(context);
-    }
+            body: _buildBody(context),
+          )
+        : _buildBody(context);
   }
 
   Widget _buildBody(BuildContext context) {
@@ -160,13 +156,17 @@ class HomeScreen extends StatelessWidget {
             final pub = publicaciones[index];
 
             return Card(
+              elevation: 4,
+              shadowColor: _coral.withOpacity(0.2),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               margin: const EdgeInsets.only(bottom: 16),
+              clipBehavior: Clip.antiAlias,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Image.network(pub.imagenUrl, fit: BoxFit.cover, width: double.infinity),
                   Padding(
-                    padding: const EdgeInsets.all(12.0),
+                    padding: const EdgeInsets.all(14),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -177,28 +177,31 @@ class HomeScreen extends StatelessWidget {
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                             ),
                             if (pub.cercleVerificado)
-                              const Padding(
-                                padding: EdgeInsets.only(left: 6),
-                                child: Icon(Icons.verified, color: Colors.blue, size: 18),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 6),
+                                child: Icon(Icons.verified, color: _coral, size: 18),
                               ),
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
                         Row(
                           children: [
                             Text(
                               'Publicado por ${pub.username}',
-                              style: const TextStyle(fontSize: 14),
+                              style: const TextStyle(fontSize: 14, color: Colors.black54),
                             ),
                             if (pub.usuarioVerificado)
-                              const Padding(
-                                padding: EdgeInsets.only(left: 6),
-                                child: Icon(Icons.verified, color: Colors.green, size: 18),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 6),
+                                child: Icon(Icons.verified_user, color: _coral, size: 18),
                               ),
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        Text('Publicado el: ${pub.creadoEn.toLocal()}'),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Publicado el: ${pub.creadoEn.toLocal()}',
+                          style: const TextStyle(fontSize: 13, color: Colors.black45),
+                        ),
                       ],
                     ),
                   ),

@@ -20,12 +20,12 @@ class _LoginScreenState extends State<LoginScreen> {
   final AuthService _authService = AuthService();
   bool _isLoading = false;
 
+  final Color _primaryColor = const Color(0xFFE87F65);
+
   Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       final AuthResponse res = await _authService.signIn(
@@ -35,21 +35,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (res.user != null) {
         if (!mounted) return;
-        
-        // Buscar el nombre de usuario
+
         String? username;
         try {
           username = await _authService.getUsernameById(res.user!.id);
-          print("Username encontrado: $username");
-        } catch (e) {
-          print("Error al obtener username: $e");
-          // Usar el email como nombre de usuario por defecto
+        } catch (_) {
           username = res.user!.email?.split('@')[0] ?? 'Usuario';
         }
-        
+
         if (!mounted) return;
-        
-        // Navegar a la pantalla principal
+
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (context) => MainScreen(username: username ?? 'Usuario'),
@@ -57,37 +52,23 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } on AuthException catch (error) {
-      print("Error de autenticación: ${error.message}");
       if (mounted) {
-        String errorMessage = error.message;
-        // Personalizar mensajes de error comunes
-        if (errorMessage.contains('Invalid login credentials')) {
-          errorMessage = 'Credenciales inválidas. Verifica tu correo y contraseña.';
-        }
-        
+        String message = error.message.contains('Invalid login credentials')
+            ? 'Credenciales inválidas. Verifica tu correo y contraseña.'
+            : error.message;
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
         );
       }
     } catch (error) {
-      print("Error detallado de login: $error");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al iniciar sesión: $error'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error al iniciar sesión: $error'), backgroundColor: Colors.red),
         );
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -101,81 +82,86 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Iniciar Sesión'),
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.account_circle,
-                  size: 100,
-                  color: Colors.blue,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Bienvenido',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  Icon(Icons.camera_alt_outlined, size: 60, color: _primaryColor),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Bienvenido a Cercle',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 40),
-                CustomTextField(
-                  controller: _emailController,
-                  labelText: 'Correo electrónico',
-                  hintText: 'ejemplo@mail.com',
-                  prefixIcon: Icons.email,
-                  validator: Validators.validateEmail,
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 16),
-                CustomTextField(
-                  controller: _passwordController,
-                  labelText: 'Contraseña',
-                  hintText: 'Ingresa tu contraseña',
-                  prefixIcon: Icons.lock,
-                  obscureText: true,
-                  validator: Validators.validatePassword,
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _signIn,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).primaryColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                  const SizedBox(height: 32),
+                  CustomTextField(
+                    controller: _emailController,
+                    labelText: 'Correo electrónico',
+                    hintText: 'ejemplo@mail.com',
+                    prefixIcon: Icons.mail_outline,
+                    validator: Validators.validateEmail,
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 16),
+                  CustomTextField(
+                    controller: _passwordController,
+                    labelText: 'Contraseña',
+                    hintText: 'Ingresa tu contraseña',
+                    prefixIcon: Icons.lock_outline,
+                    obscureText: true,
+                    validator: Validators.validatePassword,
+                  ),
+                  const SizedBox(height: 28),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _signIn,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _primaryColor,
+                        foregroundColor: Colors.white,
+                        elevation: 2,
+                        shadowColor: _primaryColor.withOpacity(0.4),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                              'Iniciar sesión',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterScreen(),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      '¿No tienes cuenta? Regístrate',
+                      style: TextStyle(
+                        color: _primaryColor,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 15,
                       ),
                     ),
-                    child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                            'Iniciar Sesión',
-                            style: TextStyle(fontSize: 16),
-                          ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const RegisterScreen(),
-                      ),
-                    );
-                  },
-                  child: const Text('¿No tienes una cuenta? Regístrate'),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

@@ -13,6 +13,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   List<dynamic> _filteredCercles = [];
   bool _isLoading = true;
   final TextEditingController _searchController = TextEditingController();
+  final Color _coral = const Color(0xFFDA7756);
 
   @override
   void initState() {
@@ -67,7 +68,6 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       return;
     }
 
-    // Verificar si el usuario ya está en el cercle
     final yaEsMiembro = await Supabase.instance.client
         .from('usuarios_cercles')
         .select()
@@ -96,9 +96,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFDA7756),
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: _coral),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Unirse'),
           ),
@@ -128,13 +126,19 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           : Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
                   child: TextField(
                     controller: _searchController,
-                    decoration: const InputDecoration(
-                      labelText: 'Buscar cercle',
-                      prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      hintText: 'Buscar cercle...',
+                      prefixIcon: const Icon(Icons.search),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
                   ),
                 ),
@@ -142,32 +146,60 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   child: _filteredCercles.isEmpty
                       ? const Center(child: Text('No se encontraron cercles.'))
                       : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           itemCount: _filteredCercles.length,
                           itemBuilder: (context, index) {
                             final cercle = _filteredCercles[index];
-                            return ListTile(
-                              title: Row(
-                                children: [
-                                  Text(cercle['nombre'] ?? 'Sin nombre'),
-                                  if (cercle['is_verified'] == true)
-                                    const Padding(
-                                      padding: EdgeInsets.only(left: 4.0),
-                                      child: Icon(
-                                        Icons.verified,
-                                        color: Color(0xFFDA7756),
-                                        size: 18,
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              elevation: 4,
+                              shadowColor: _coral.withOpacity(0.2),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.public, color: Colors.grey),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            cercle['nombre'] ?? 'Sin nombre',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                        ),
+                                        if (cercle['is_verified'] == true)
+                                          Icon(Icons.verified, color: _coral, size: 20),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      cercle['descripcion'] ?? '',
+                                      style: const TextStyle(fontSize: 14, color: Colors.black54),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: ElevatedButton(
+                                        onPressed: () => _intentarUnirse(cercle),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: _coral,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                        ),
+                                        child: const Text('Unirse'),
                                       ),
                                     ),
-                                ],
-                              ),
-                              subtitle: Text(cercle['descripcion'] ?? ''),
-                              leading: const Icon(Icons.public),
-                              trailing: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFDA7756),
+                                  ],
                                 ),
-                                onPressed: () => _intentarUnirse(cercle),
-                                child: const Text('Unirse'),
                               ),
                             );
                           },

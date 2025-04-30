@@ -38,14 +38,14 @@ class _CercleDetailScreenState extends State<CercleDetailScreen> {
     try {
       final res = await _supabase
           .from('publicaciones')
-          .select('imagen_url, user_id')
+          .select('id, imagen_url, user_id')
           .eq('cercle_id', widget.cercle['id']);
 
       setState(() {
         _imagenes = List<Map<String, dynamic>>.from(res);
       });
     } catch (e) {
-      _mostrarMensaje('Error al cargar imágenes', true);
+      _mostrarMensaje('Error al cargar imágenes: ${e.toString()}', true);
     }
   }
 
@@ -85,70 +85,119 @@ class _CercleDetailScreenState extends State<CercleDetailScreen> {
       _mostrarMensaje('Imagen subida correctamente.');
       await _cargarImagenes();
     } catch (e) {
-      _mostrarMensaje('Error inesperado al subir la imagen.', true);
+      _mostrarMensaje('Error inesperado al subir la imagen: ${e.toString()}', true);
     }
+  }
+
+  void _mostrarDialogoConImagen(String imageUrl, String username, bool isVerified) {
+    showDialog(
+      context: this.context,
+      builder: (BuildContext context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    height: 200,
+                    width: double.infinity,
+                    alignment: Alignment.center,
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                          : null,
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 200,
+                    width: double.infinity,
+                    color: Colors.grey[300],
+                    alignment: Alignment.center,
+                    child: const Text('Error al cargar la imagen'),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'by @$username',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                if (isVerified)
+                  const Padding(
+                    padding: EdgeInsets.only(left: 6),
+                    child: Icon(
+                      Icons.verified,
+                      color: Color(0xFFDA7756),
+                      size: 18,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cerrar'),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _mostrarDetallePublicacion(
       String imageUrl, String userId) async {
     try {
+      // Verificar que la URL de la imagen sea válida
+      if (imageUrl.isEmpty) {
+        _mostrarMensaje('URL de imagen inválida', true);
+        return;
+      }
+
       final userRes = await _supabase
           .from('profiles')
           .select('username, is_verified')
           .eq('id', userId)
           .maybeSingle();
-
+          
+      // Si no se encontró el usuario, usar valores predeterminados
       if (userRes == null) {
-        _mostrarMensaje('Usuario no encontrado', true);
+        _mostrarMensaje('Información de usuario no disponible', true);
+        final username = 'Usuario desconocido';
+        final isVerified = false;
+        
+        // Mostrar el diálogo con la información disponible (solo la imagen)
+        if (!mounted) return;
+        _mostrarDialogoConImagen(imageUrl, username, isVerified);
         return;
       }
 
       final username = userRes['username'] ?? 'usuario';
       final isVerified = userRes['is_verified'] ?? false;
 
-      showDialog(
-        context: this.context,
-        builder: (BuildContext context) => Dialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-                child: Image.network(imageUrl),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'by @$username',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                  if (isVerified)
-                    const Padding(
-                      padding: EdgeInsets.only(left: 6),
-                      child: Icon(
-                        Icons.verified,
-                        color: Color(0xFFDA7756),
-                        size: 18,
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-            ],
-          ),
-        ),
-      );
+      if (!mounted) return;
+      
+      _mostrarDialogoConImagen(imageUrl, username, isVerified);
     } catch (e) {
-      _mostrarMensaje('Error al cargar detalle de la publicación.', true);
+      _mostrarMensaje('Error al cargar detalle de la publicación: ${e.toString()}', true);
     }
   }
 
@@ -160,7 +209,12 @@ class _CercleDetailScreenState extends State<CercleDetailScreen> {
       appBar: AppBar(
         title: Row(
           children: [
-            Text(cercle['nombre'] ?? 'Detalle del cercle'),
+            Flexible(
+              child: Text(
+                cercle['nombre'] ?? 'Detalle del cercle',
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
             if (cercle['is_verified'] == true)
               const Padding(
                 padding: EdgeInsets.only(left: 6),
@@ -190,33 +244,62 @@ class _CercleDetailScreenState extends State<CercleDetailScreen> {
               label: const Text('Subir imagen'),
             ),
             const SizedBox(height: 16),
-            Expanded(
-              child: GridView.builder(
-                itemCount: _imagenes.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  childAspectRatio: 1,
-                ),
-                itemBuilder: (context, index) {
-                  final imagen = _imagenes[index];
-                  return GestureDetector(
-                    onTap: () => _mostrarDetallePublicacion(
-                      imagen['imagen_url'],
-                      imagen['user_id'],
+            _imagenes.isEmpty
+                ? const Expanded(
+                    child: Center(
+                      child: Text('No hay imágenes disponibles'),
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        imagen['imagen_url'],
-                        fit: BoxFit.cover,
+                  )
+                : Expanded(
+                    child: GridView.builder(
+                      itemCount: _imagenes.length,
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        mainAxisSpacing: 8,
+                        crossAxisSpacing: 8,
+                        childAspectRatio: 1,
                       ),
+                      itemBuilder: (context, index) {
+                        final imagen = _imagenes[index];
+                        return GestureDetector(
+                          onTap: () => _mostrarDetallePublicacion(
+                            imagen['imagen_url'],
+                            imagen['user_id'],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              imagen['imagen_url'],
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  color: Colors.grey[200],
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      value: loadingProgress.expectedTotalBytes != null
+                                          ? loadingProgress.cumulativeBytesLoaded /
+                                              loadingProgress.expectedTotalBytes!
+                                          : null,
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.grey[300],
+                                  child: const Icon(
+                                    Icons.broken_image,
+                                    color: Colors.grey,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
-            ),
+                  ),
           ],
         ),
       ),

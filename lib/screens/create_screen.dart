@@ -15,6 +15,8 @@ class _CreateScreenState extends State<CreateScreen> {
   String _visibilidad = 'publico';
   bool _isLoading = false;
 
+  final Color _accentColor = const Color(0xFFDA7756);
+
   Future<void> crearCercle() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -80,72 +82,88 @@ class _CreateScreenState extends State<CreateScreen> {
   void _clearForm() {
     _nombreController.clear();
     _descripcionController.clear();
+    setState(() => _visibilidad = 'publico');
+  }
+
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: _accentColor),
+      filled: true,
+      fillColor: Colors.grey[100],
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    const accentColor = Color(0xFFDA7756);
-
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _nombreController,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre',
-                  prefixIcon: Icon(Icons.add_circle_outline, color: accentColor),
-                  border: OutlineInputBorder(),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Crear un nouveau cercle',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Introduce un nombre' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descripcionController,
-                decoration: const InputDecoration(
-                  labelText: 'Descripción',
-                  prefixIcon: Icon(Icons.description, color: accentColor),
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 24),
+                TextFormField(
+                  controller: _nombreController,
+                  decoration: _inputDecoration('Nombre', Icons.add_circle_outline),
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty ? 'Introduce un nombre' : null,
                 ),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Introduce una descripción' : null,
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _visibilidad,
-                items: const [
-                  DropdownMenuItem(value: 'publico', child: Text('Público')),
-                  DropdownMenuItem(value: 'privado', child: Text('Privado')),
-                ],
-                onChanged: (value) {
-                  if (value != null) setState(() => _visibilidad = value);
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Visibilidad',
-                  prefixIcon: Icon(Icons.visibility, color: accentColor),
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _descripcionController,
+                  decoration: _inputDecoration('Descripción', Icons.description),
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty ? 'Introduce una descripción' : null,
                 ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: accentColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _visibilidad,
+                  decoration: _inputDecoration('Visibilidad', Icons.visibility),
+                  items: const [
+                    DropdownMenuItem(value: 'publico', child: Text('Público')),
+                    DropdownMenuItem(value: 'privado', child: Text('Privado')),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) setState(() => _visibilidad = value);
+                  },
                 ),
-                onPressed: _isLoading ? null : crearCercle,
-                child: _isLoading
-                    ? const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      )
-                    : const Text('Crear Cercle'),
-              ),
-            ],
+                const SizedBox(height: 30),
+                ElevatedButton(
+                  onPressed: _isLoading ? null : crearCercle,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _accentColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text('Crear Cercle'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
