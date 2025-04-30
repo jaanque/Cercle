@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'mi_cercle.dart';
+import 'cercle_detail_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String username;
@@ -41,7 +41,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> fetchUserCercles() async {
     final response = await Supabase.instance.client
         .from('usuarios_cercles')
-        .select('cercle_id, cercles(id, nombre, descripcion, user_id)')
+        .select(
+            'cercle_id, cercles(id, nombre, descripcion, user_id, publicaciones(count))')
         .eq('user_id', user!.id);
 
     setState(() {
@@ -53,14 +54,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Perfil')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             const CircleAvatar(
               radius: 60,
-              backgroundColor: Colors.blue,
+              backgroundColor: Color(0xFF333333),
               child: Icon(
                 Icons.person,
                 size: 80,
@@ -68,8 +68,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 24),
-
-            // Nombre con verificación
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -85,13 +83,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     padding: EdgeInsets.only(left: 8.0),
                     child: Icon(
                       Icons.verified,
-                      color: Colors.amber,
+                      color: Color(0xFFDA7756),
                       size: 28,
                     ),
                   ),
               ],
             ),
-
             const SizedBox(height: 16),
             const Text(
               'Perfil de usuario',
@@ -99,8 +96,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 40),
-
-            // Información personal (solo fecha)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -127,10 +122,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             ),
-
             const SizedBox(height: 32),
-
-            // Cercles del usuario
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -157,12 +149,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Column(
                       children: _cercles.map((item) {
                         final cercle = item['cercles'];
+                        final postCount =
+                            cercle['publicaciones'][0]['count'] ?? 0;
 
                         return ListTile(
                           leading: const Icon(Icons.group),
                           title: Text(cercle['nombre'] ?? ''),
-                          subtitle: Text(cercle['descripcion'] ?? ''),
-                          // Aquí he eliminado el IconButton (la flecha de navegación)
+                          subtitle: Text(
+                            '${cercle['descripcion'] ?? ''}\nPublicaciones: $postCount',
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    CercleDetailScreen(cercle: cercle),
+                              ),
+                            );
+                          },
                         );
                       }).toList(),
                     ),

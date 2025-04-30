@@ -51,16 +51,6 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     });
   }
 
-  Future<bool> usuarioTieneCercle(String userId) async {
-    final existing = await Supabase.instance.client
-        .from('usuarios_cercles')
-        .select()
-        .eq('user_id', userId)
-        .maybeSingle();
-
-    return existing != null;
-  }
-
   Future<void> unirseACercle(String userId, String cercleId) async {
     await Supabase.instance.client.from('usuarios_cercles').insert({
       'user_id': userId,
@@ -77,12 +67,19 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       return;
     }
 
-    final yaTieneCercle = await usuarioTieneCercle(user.id);
+    // Verificar si el usuario ya está en el cercle
+    final yaEsMiembro = await Supabase.instance.client
+        .from('usuarios_cercles')
+        .select()
+        .eq('user_id', user.id)
+        .eq('cercle_id', cercle['id'])
+        .maybeSingle();
 
-    if (yaTieneCercle) {
+    if (yaEsMiembro != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Ya perteneces a un cercle. Debes salir antes de unirte a otro.'),
+          content: Text('Ya eres miembro de este cercle.'),
+          backgroundColor: Colors.orange,
         ),
       );
       return;
@@ -99,6 +96,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDA7756),
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Unirse'),
           ),
@@ -123,7 +123,6 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Descubrir cercles públicos')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
@@ -147,10 +146,26 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                           itemBuilder: (context, index) {
                             final cercle = _filteredCercles[index];
                             return ListTile(
-                              title: Text(cercle['nombre'] ?? 'Sin nombre'),
+                              title: Row(
+                                children: [
+                                  Text(cercle['nombre'] ?? 'Sin nombre'),
+                                  if (cercle['is_verified'] == true)
+                                    const Padding(
+                                      padding: EdgeInsets.only(left: 4.0),
+                                      child: Icon(
+                                        Icons.verified,
+                                        color: Color(0xFFDA7756),
+                                        size: 18,
+                                      ),
+                                    ),
+                                ],
+                              ),
                               subtitle: Text(cercle['descripcion'] ?? ''),
                               leading: const Icon(Icons.public),
                               trailing: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFDA7756),
+                                ),
                                 onPressed: () => _intentarUnirse(cercle),
                                 child: const Text('Unirse'),
                               ),

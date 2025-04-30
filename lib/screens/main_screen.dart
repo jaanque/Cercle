@@ -3,7 +3,6 @@ import 'home_screen.dart';
 import 'create_screen.dart';
 import 'discover_screen.dart';
 import 'profile_screen.dart';
-import 'mi_cercle.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
 
@@ -54,13 +53,11 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Lista de pantallas para mostrar - reordenada para coincidir con la barra de navegación
     final List<Widget> screens = [
       HomeScreen(username: widget.username, showMenu: false),
       const DiscoverScreen(),
-      const CreateScreen(), // Movida a la posición central
-      const MiCercleScreen(),
-      ProfileScreen(username: widget.username), // Perfil movido a la derecha del todo
+      const CreateScreen(),
+      ProfileScreen(username: widget.username),
     ];
 
     return Scaffold(
@@ -99,10 +96,6 @@ class _MainScreenState extends State<MainScreen> {
             label: 'Crear',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.group),
-            label: 'Mi Cercle',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Perfil',
           ),
@@ -120,8 +113,6 @@ class _MainScreenState extends State<MainScreen> {
       case 2:
         return 'Crear';
       case 3:
-        return 'Mi Cercle';
-      case 4:
         return 'Perfil';
       default:
         return '';

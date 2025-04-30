@@ -27,17 +27,6 @@ class _CreateScreenState extends State<CreateScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final existing = await Supabase.instance.client
-          .from('cercles')
-          .select()
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-      if (existing != null) {
-        _showErrorSnackBar('Ya has creado un cercle. Solo puedes crear uno.');
-        return;
-      }
-
       final nombreExiste = await Supabase.instance.client
           .from('cercles')
           .select('id')
@@ -77,11 +66,15 @@ class _CreateScreenState extends State<CreateScreen> {
   }
 
   void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.red));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
   }
 
   void _showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.green));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.green),
+    );
   }
 
   void _clearForm() {
@@ -91,8 +84,9 @@ class _CreateScreenState extends State<CreateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const accentColor = Color(0xFFDA7756);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Crear Cercle')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -104,7 +98,7 @@ class _CreateScreenState extends State<CreateScreen> {
                 controller: _nombreController,
                 decoration: const InputDecoration(
                   labelText: 'Nombre',
-                  prefixIcon: Icon(Icons.add_circle_outline),
+                  prefixIcon: Icon(Icons.add_circle_outline, color: accentColor),
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) =>
@@ -115,12 +109,11 @@ class _CreateScreenState extends State<CreateScreen> {
                 controller: _descripcionController,
                 decoration: const InputDecoration(
                   labelText: 'Descripción',
-                  prefixIcon: Icon(Icons.description),
+                  prefixIcon: Icon(Icons.description, color: accentColor),
                   border: OutlineInputBorder(),
                 ),
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Introduce una descripción'
-                    : null,
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Introduce una descripción' : null,
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
@@ -134,15 +127,22 @@ class _CreateScreenState extends State<CreateScreen> {
                 },
                 decoration: const InputDecoration(
                   labelText: 'Visibilidad',
-                  prefixIcon: Icon(Icons.visibility),
+                  prefixIcon: Icon(Icons.visibility, color: accentColor),
                   border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 20),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: accentColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
                 onPressed: _isLoading ? null : crearCercle,
                 child: _isLoading
-                    ? const CircularProgressIndicator()
+                    ? const CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      )
                     : const Text('Crear Cercle'),
               ),
             ],
